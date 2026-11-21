@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Frontend build
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+*.tsbuildinfo
+
+# Python
+backend/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!frontend/.env.example
+!backend/.env.example
+
+# Datasets & model artifacts (large / regenerable)
+data/raw/*
+data/interim/*
+data/processed/*
+data/cache/*
+!data/**/.gitkeep
+backend/artifacts/
+backend/mlruns/
+*.tif
+*.tiff
+*.gpkg
+*.parquet
+*.pkl
+*.joblib
+*.onnx
+*.pt
+*.pth
+
+# Uploads
+backend/uploads/
+frontend/uploads/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
