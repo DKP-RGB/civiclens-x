@@ -407,17 +407,23 @@ export function IndoreMap({
       })
 
       setReady(true)
+      // The container can be measured before layout settles; resize once the
+      // next frame paints so the canvas fills the card.
+      window.requestAnimationFrame(() => map.resize())
     }
 
-    map.on('load', addOverlays)
+    // `style.load` fires for both the initial style and the plain fallback
+    // style, so overlays are added in either case.
+    map.on('style.load', addOverlays)
 
     // If OpenFreeMap is unreachable, fall back to a plain background style so
     // the boundary, risk grid and incidents still render instead of an endless
     // spinner. The legend and data layers stay usable without basemap tiles.
-    const styleTimeout = window.setTimeout(() => {
-      if (overlaysAdded || map.isStyleLoaded()) return
+    let fallbackApplied = false
+    const applyFallback = () => {
+      if (fallbackApplied || overlaysAdded) return
+      fallbackApplied = true
       setError('Basemap tiles unavailable — showing the risk grid only.')
-      map.once('style.load', addOverlays)
       map.setStyle({
         version: 8,
         sources: {},
@@ -429,11 +435,20 @@ export function IndoreMap({
           },
         ],
       })
-    }, 12_000)
+      map.once('style.load', addOverlays)
+      map.once('idle', addOverlays)
+    }
+
+    const styleTimeout = window.setTimeout(applyFallback, 8000)
 
     map.on('error', (event: maplibregl.ErrorEvent) => {
-      if (!map.isStyleLoaded()) setError('The basemap style could not be loaded.')
-      console.warn('CivicLens X map:', event.error?.message ?? event)
+      const message = event.error?.message ?? ''
+      if (!map.isStyleLoaded() && /style|fetch|load/i.test(message)) {
+        applyFallback()
+      } else if (!map.isStyleLoaded()) {
+        setError('The basemap style could not be loaded.')
+      }
+      console.warn('CivicLens X map:', message || event)
     })
 
     const observer = new ResizeObserver(() => map.resize())
@@ -548,7 +563,7 @@ export function IndoreMap({
     >
       <div
         ref={containerRef}
-        className={cn('absolute inset-0', !interactive && 'pointer-events-none')}
+        className={cn('h-full w-full', !interactive && 'pointer-events-none')}
         role="application"
         aria-label={ariaLabel}
       />
