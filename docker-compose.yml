@@ -1,22 +1,40 @@
 # CivicLens X - local container stack
 #
-# Phase 2 ships the frontend only. The FastAPI backend service is added in
-# Phase 3 once its endpoints exist; wiring an empty service now would be
-# misleading. The frontend still reads VITE_API_BASE_URL and will pick up the
-# backend as soon as it is available.
-#
 # Usage:
 #   docker compose up --build
-#   open http://localhost:8080/
+#   frontend  http://localhost:8080/
+#   API docs  http://localhost:8000/docs
+#
+# The frontend still runs on bundled data in Phase 3; the API is available for
+# inspection and for the Phase 7 integration.
 
 services:
+  backend:
+    build:
+      context: ./backend
+    image: civiclens-x-backend:dev
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: production
+      DATABASE_URL: sqlite:////data/civiclens.db
+      UPLOAD_DIR: /data/uploads
+      CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+    volumes:
+      - civiclens-data:/data
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
       args:
-        # Use the host-reachable backend URL once the API exists.
         VITE_API_BASE_URL: http://localhost:8000/api/v1
     image: civiclens-x-frontend:dev
     ports:
       - "8080:80"
+    depends_on:
+      - backend
     restart: unless-stopped
+
+volumes:
+  civiclens-data:

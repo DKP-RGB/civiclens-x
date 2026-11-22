@@ -31,6 +31,10 @@ data/cache/*
 !data/**/.gitkeep
 backend/artifacts/
 backend/mlruns/
+backend/*.db
+backend/tests/*.db
+*.sqlite
+*.sqlite3
 *.tif
 *.tiff
 *.gpkg
@@ -43,6 +47,7 @@ backend/mlruns/
 
 # Uploads
 backend/uploads/
+backend/*_uploads/
 frontend/uploads/
 
 # OS / editors

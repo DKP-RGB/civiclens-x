@@ -10,9 +10,11 @@ preventive action queue.
 The project is deliberately scoped to **Indore only**. It does not make predictions for any
 other city.
 
-> **Status: Phase 2 complete (frontend).** All pages run on bundled data. There is no backend
-> API yet, and there is no trained ML model. Every screen states which numbers are real public
-> data, which are simulated, and which are illustrative model output.
+> **Status: Phase 2 complete (frontend), Phase 3 in progress (API).** All pages run on
+> bundled data. A FastAPI backend now persists complaints and serves the same illustrative
+> risk scores, but the frontend is not wired to it yet. There is no trained ML model.
+> Every screen states which numbers are real public data, which are simulated, and which
+> are illustrative model output.
 
 ---
 
@@ -73,11 +75,13 @@ chosen, not verified.
 - Recharts 3, React Router 7, Lucide icons
 - Local state store persisted to `localStorage`
 
-**Backend (scaffolded, Phase 3)**
-- Python, FastAPI, SQLAlchemy, Pydantic
-- PostGIS recommended; SQLite fallback supported
-- Gemini free tier with a graceful rule-based fallback
-- A virtual environment already exists at `backend/.venv`
+**Backend (Phase 3)**
+- Python 3.12, FastAPI, SQLAlchemy 2, Pydantic v2
+- SQLite by default; PostgreSQL/PostGIS via `DATABASE_URL`
+- Complaint persistence with a five-stage timeline and citizen notes
+- Risk API that ports the frontend scorer for score parity
+- Photo uploads from base64 data URLs, served from `/uploads`
+- Gemini free tier arrives in Phase 6 with a rule-based fallback
 
 ---
 
@@ -94,7 +98,7 @@ civiclens-x/
 │     ├─ pages/         Landing, citizen and authority pages
 │     ├─ store/         localStorage-backed app store
 │     └─ types/         Shared domain types
-├─ backend/             FastAPI scaffold (routers, models, ml, geospatial, ...)
+├─ backend/             FastAPI API, SQLite/PostgreSQL persistence, tests
 ├─ scripts/             Node data pipeline (boundary, grid, elevation, build)
 ├─ data/                Raw / interim / processed / cache (git-ignored)
 ├─ notebooks/           Analysis scratch space
@@ -128,16 +132,52 @@ npm run lint      # oxlint
 
 On Windows you can also run `setup.bat` once and then `start.bat`.
 
-### 2. Backend (Phase 3, not yet wired)
+### 2. Backend (Phase 3)
 
 ```bash
 cd backend
-.venv\Scripts\activate        # Windows
-pip install -r requirements.txt
+python -m venv .venv                  # already created in this workspace
+.venv\Scripts\activate                # Windows
+pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 ```
 
-The frontend reads `VITE_API_BASE_URL` but does not call the API yet.
+Open <http://127.0.0.1:8000/docs> for the interactive API. On first start the
+backend creates the SQLite database and seeds the same 24 demo complaints the
+frontend ships.
+
+Run the checks:
+
+```bash
+python -m pytest
+python -m ruff check app tests
+```
+
+The frontend reads `VITE_API_BASE_URL` but does not call the API yet; integration
+is a later phase.
+
+### API overview
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/health` | Liveness |
+| GET | `/health/ready` | Database readiness |
+| GET | `/api/v1/meta` | Model card, grid info, provenance, disclaimers |
+| GET | `/api/v1/localities` | 20 Indore localities |
+| GET | `/api/v1/grid` | 1,887 grid cells + metadata |
+| GET | `/api/v1/incidents` | Simulated incidents, filterable |
+| GET | `/api/v1/complaints` | List with status/priority/category/search filters |
+| POST | `/api/v1/complaints` | Create a complaint, link its cell, save an optional photo |
+| GET | `/api/v1/complaints/{id}` | Complaint with timeline |
+| PATCH | `/api/v1/complaints/{id}` | Update status/priority and append a timeline event |
+| POST | `/api/v1/complaints/{id}/notes` | Add information to the timeline |
+| GET | `/api/v1/risk` | Full risk surface for a category and rainfall inputs |
+| GET | `/api/v1/risk/summary` | Compact summary + top 10 cells |
+| GET | `/api/v1/risk/cells/{cell_id}` | Single cell with factors |
+| POST | `/api/v1/risk/simulate` | Re-score under a what-if scenario |
+
+Responses use camelCase to match the frontend domain types. Risk scores from the
+API are numerically identical to the frontend scorer for the same inputs.
 
 ### 3. Environment
 
@@ -150,6 +190,20 @@ cp backend/.env.example backend/.env
 ```
 
 The Gemini key is optional. Leave it blank to run on fallback text.
+
+### 4. Docker (optional)
+
+```bash
+docker compose up --build
+```
+
+- Frontend: <http://localhost:8080/>
+- API docs: <http://localhost:8000/docs>
+
+The stack runs the frontend behind nginx and the API on SQLite inside a named
+volume (`civiclens-data`). Override `DATABASE_URL` in `docker-compose.yml` to use
+PostgreSQL/PostGIS instead. The frontend still serves its bundled data in Phase 3;
+the container wiring is ready for the Phase 7 integration.
 
 ---
 
@@ -169,9 +223,14 @@ node scripts/fetch_elevation.mjs
 
 # 4. Emit typed frontend data
 node scripts/build_frontend_data.mjs
+
+# 5. Export plain JSON for the FastAPI backend
+node scripts/export_backend_data.mjs
 ```
 
 Raw downloads, caches and intermediate files live under `data/` and are git-ignored.
+The backend JSON in `backend/app/data/` is generated and committed so the API can
+start without re-running the pipeline.
 
 ---
 
@@ -197,14 +256,14 @@ assumptions. It is a sensitivity tool, not a forecast.
 | --- | --- | --- |
 | 1 | Foundation, data pipeline, project structure | Done |
 | 2 | Complete frontend on mock data | **Done** |
-| 3 | FastAPI backend, database, complaint persistence | Pending approval |
+| 3 | FastAPI backend, database, complaint persistence | **Done** |
 | 4 | Real public-data ingestion and storage | Planned |
 | 5 | Model training, validation, honest metrics | Planned |
 | 6 | Gemini explanations with fallback | Planned |
-| 7 | Integration, testing, deployment | Planned |
+| 7 | Frontend integration, testing, deployment | Planned |
 | 8 | Documentation and demo | Planned |
 
-The backend is intentionally not started until the frontend is reviewed and approved.
+The frontend still runs on its bundled data. Phase 7 switches it to the API.
 
 ---
 
@@ -213,8 +272,10 @@ The backend is intentionally not started until the frontend is reviewed and appr
 - Weather is a simulated scenario; there is no live forecast feed yet.
 - Incidents, population, assets and complaints are synthetic demo data.
 - Risk scores are illustrative and must not inform real operational decisions.
+- The frontend still runs on bundled data; it does not call the API yet (Phase 7).
+- Preventive actions remain frontend-only until the model and optimiser exist.
 - The basemap requires network access to OpenFreeMap; the risk grid still renders without it.
-- Browser storage means complaints and status changes do not leave the device.
+- Browser storage means complaints and status changes do not leave the device in the current frontend.
 - The JavaScript bundle is large because MapLibre and Recharts are loaded eagerly; code
   splitting is a later optimisation.
 

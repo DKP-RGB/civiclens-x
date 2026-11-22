@@ -1,10 +1,10 @@
-import type { ModelInfo } from '@/types'
+﻿import type { ModelInfo } from '@/types'
 
 export const MODEL_INFO: ModelInfo = {
-  name: 'Waterlogging risk · prototype scorer',
+  name: 'Waterlogging risk - prototype scorer',
   version: '0.1.0-prototype',
   algorithm: 'Transparent logistic scoring (XGBoost planned for Phase 5)',
-  status: 'Frontend prototype — no trained ML model yet',
+  status: 'Frontend prototype - no trained ML model yet',
   horizonHours: 24,
   trainedAt: null,
   metrics: {
