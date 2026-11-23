@@ -580,7 +580,19 @@ export function IndoreMap({
           {error}
         </div>
       ) : null}
-      {showLegend ? <MapLegend colorMode={colorMode} label={legendLabel} /> : null}
+      {showLegend ? (
+        <MapLegend
+          colorMode={colorMode}
+          label={legendLabel}
+          hint={
+            picker
+              ? 'Click the map to set a location'
+              : onSelectCell
+                ? 'Click a square to see its drivers'
+                : undefined
+          }
+        />
+      ) : null}
       {picker ? (
         <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex items-center gap-1.5 rounded-md border border-border bg-card/90 px-2.5 py-1.5 text-2xs text-muted-foreground shadow-sm backdrop-blur">
           <MapPin className="h-3 w-3" />
@@ -591,7 +603,15 @@ export function IndoreMap({
   )
 }
 
-function MapLegend({ colorMode, label }: { colorMode: MapColorMode; label: string }) {
+function MapLegend({
+  colorMode,
+  label,
+  hint,
+}: {
+  colorMode: MapColorMode
+  label: string
+  hint?: string
+}) {
   if (colorMode === 'delta') {
     return (
       <div className="absolute bottom-8 left-3 z-10 rounded-lg border border-border bg-card/90 p-2.5 shadow-sm backdrop-blur">
@@ -604,6 +624,9 @@ function MapLegend({ colorMode, label }: { colorMode: MapColorMode; label: strin
           <span>No change</span>
           <span>Higher</span>
         </div>
+        {hint ? (
+          <p className="mt-1.5 max-w-[190px] text-[9px] leading-snug text-muted-foreground">{hint}</p>
+        ) : null}
       </div>
     )
   }
@@ -613,17 +636,23 @@ function MapLegend({ colorMode, label }: { colorMode: MapColorMode; label: strin
       <p className="mb-1.5 text-2xs font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
-      <div className="flex items-center gap-1">
+      <div className="flex items-end gap-1">
         {levels.map((level) => (
-          <div key={level} className="flex flex-col items-center gap-1">
+          <div key={level} className="flex flex-col items-center gap-0.5">
             <span
-              className="h-2 w-9 rounded-sm"
+              className="h-2 w-10 rounded-sm"
               style={{ backgroundColor: RISK_LEVEL_META[level].hex }}
             />
             <span className="text-[10px] text-muted-foreground">{RISK_LEVEL_META[level].label}</span>
+            <span className="num text-[9px] leading-none text-muted-foreground/80">
+              {RISK_LEVEL_META[level].range}
+            </span>
           </div>
         ))}
       </div>
+      {hint ? (
+        <p className="mt-1.5 max-w-[190px] text-[9px] leading-snug text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   )
 }

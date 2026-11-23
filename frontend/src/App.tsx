@@ -6,6 +6,7 @@ import { ToastProvider } from '@/components/ui/toast'
 import { CitizenLayout } from '@/components/layout/CitizenLayout'
 import { AuthorityLayout } from '@/components/layout/AuthorityLayout'
 import { LandingPage } from '@/pages/LandingPage'
+import { GuidePage } from '@/pages/GuidePage'
 import { CitizenDashboard } from '@/pages/citizen/CitizenDashboard'
 import { CitizenReport } from '@/pages/citizen/CitizenReport'
 import { MyComplaints } from '@/pages/citizen/MyComplaints'
@@ -57,6 +58,7 @@ export default function App() {
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/guide" element={<GuidePage />} />
 
             <Route path="/citizen" element={<CitizenLayout />}>
               <Route index element={<CitizenDashboard />} />

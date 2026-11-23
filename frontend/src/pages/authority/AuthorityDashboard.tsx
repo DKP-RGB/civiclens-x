@@ -19,6 +19,7 @@ import type { CellRisk } from '@/types'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
+import { InfoTip } from '@/components/ui/info-tip'
 import { Sheet, SheetBody } from '@/components/ui/dialog'
 import { StatCard } from '@/components/domain/stat-card'
 import { RiskBadge, InlineNote, ProvenanceBadge, ComplaintStatusBadge } from '@/components/domain/badges'
@@ -117,27 +118,59 @@ export function AuthorityDashboard() {
           icon={Gauge}
           accent="warning"
           trendLabel="24 h horizon"
-          hint="Illustrative scorer"
+          hint={
+            <span className="inline-flex items-center gap-1">
+              Average across {formatNumber(summary.totalCells)} cells
+              <InfoTip label="Mean city risk">
+                The average waterlogging score across every 250 m cell in Indore. It summarises the
+                city, not any single neighbourhood.
+              </InfoTip>
+            </span>
+          }
         />
         <StatCard
           label="Critical cells"
           value={formatNumber(summary.criticalCells)}
           icon={AlertTriangle}
           accent="danger"
-          hint={`${formatNumber(summary.highCells)} high · of ${formatNumber(summary.totalCells)}`}
+          hint={
+            <span className="inline-flex items-center gap-1">
+              {formatNumber(summary.highCells)} high · of {formatNumber(summary.totalCells)}
+              <InfoTip label="Critical cells">
+                Cells scoring 70% or above under the current demo rainfall scenario. They are the
+                first candidates for inspection, not confirmed flooding.
+              </InfoTip>
+            </span>
+          }
         />
         <StatCard
           label="People in at-risk cells"
           value={formatNumber(exposedPopulation)}
           icon={Waves}
           accent="warning"
-          hint="Simulated population estimate"
+          hint={
+            <span className="inline-flex items-center gap-1">
+              Simulated population estimate
+              <InfoTip label="Exposed population">
+                Population is a demo estimate split evenly across each locality’s cells. It shows how
+                exposure could be counted, not a census result.
+              </InfoTip>
+            </span>
+          }
         />
         <StatCard
           label="Open complaints"
           value={formatNumber(openComplaints.length)}
           icon={ClipboardList}
-          hint={`${urgentComplaints.length} high or urgent priority`}
+          hint={
+            <span className="inline-flex items-center gap-1">
+              {urgentComplaints.length} high or urgent priority
+              <InfoTip label="Open complaints">
+                Citizen reports that are not resolved yet. In this prototype they are stored in your
+                browser; the FastAPI backend already supports persistence for the integration phase.
+              </InfoTip>
+            </span>
+          }
         />
       </div>
 

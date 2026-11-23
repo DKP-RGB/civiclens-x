@@ -15,6 +15,7 @@ import type { CellRisk } from '@/types'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
+import { InfoTip } from '@/components/ui/info-tip'
 import { Select } from '@/components/ui/input'
 import { Sheet, SheetBody } from '@/components/ui/dialog'
 import { RiskBadge, ComplaintStatusBadge, InlineNote } from '@/components/domain/badges'
@@ -118,20 +119,29 @@ export function CitizenDashboard() {
                 Your locality · next 24 h
               </p>
               <CardTitle className="mt-1 text-base">{locality.name}</CardTitle>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                 {summary.cellCount} grid cells · peak {pct(summary.maxProbability)}
+                <InfoTip label="Locality risk">
+                  The average chance that a 250 m cell in {locality.name} sees standing water in the
+                  next 24 hours under the demo rainfall scenario. “Peak” is the highest single cell.
+                </InfoTip>
               </p>
             </div>
             <RiskBadge level={summary.level} />
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <RiskGauge
-                value={summary.meanProbability}
-                level={summary.level}
-                size={126}
-                label="Waterlogging risk"
-              />
+              <div className="flex flex-col items-center gap-1">
+                <RiskGauge
+                  value={summary.meanProbability}
+                  level={summary.level}
+                  size={126}
+                  label="Waterlogging risk"
+                />
+                <p className="max-w-[150px] text-center text-[10px] leading-snug text-muted-foreground">
+                  Average chance of standing water in a 250 m cell
+                </p>
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   {explainLocality(summary, 'the next 24 hours')}

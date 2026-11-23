@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   ArrowRight,
   FileText,
+  HelpCircle,
   Home,
   MapPin,
   Menu,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Brand } from '@/components/layout/brand'
+import { PortalGuide } from '@/components/layout/portal-guide'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetBody, SheetHeader, SheetTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
@@ -67,6 +69,13 @@ export function CitizenLayout() {
               Citizen demo
             </span>
             <Link
+              to="/guide"
+              className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+              Guide
+            </Link>
+            <Link
               to="/authority"
               className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
             >
@@ -88,6 +97,29 @@ export function CitizenLayout() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:py-8">
+        <PortalGuide
+          portal="citizen"
+          title="Three things you can do in the citizen portal"
+          steps={[
+            {
+              icon: MapPin,
+              title: 'Check your locality',
+              text: 'See the next 24 h waterlogging score and the highest-risk cells near you.',
+            },
+            {
+              icon: PlusCircle,
+              title: 'Report with a photo and pin',
+              text: 'Your report is linked to the same 250 m cell used for prediction.',
+            },
+            {
+              icon: FileText,
+              title: 'Follow the status',
+              text: 'Track review, inspection and repair updates in My complaints.',
+            },
+          ]}
+          primaryTo="/citizen/risk"
+          primaryLabel="Check my locality"
+        />
         <Outlet />
       </main>
 
@@ -144,6 +176,13 @@ export function CitizenLayout() {
               Authority portal
             </span>
             <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/guide"
+            className="mt-1 flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <HelpCircle className="h-4 w-4" />
+            How to use CivicLens X
           </Link>
           <Link to="/" className="mt-1 px-3 py-2 text-xs text-muted-foreground hover:text-foreground">
             Exit to portal selection

@@ -14,6 +14,7 @@ import type { RiskCategory } from '@/types'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input, Select } from '@/components/ui/input'
+import { InfoTip } from '@/components/ui/info-tip'
 import { buttonVariants } from '@/components/ui/button'
 import { InlineNote, ProvenanceBadge, RiskBadge } from '@/components/domain/badges'
 import { RiskGauge } from '@/components/domain/risk-gauge'
@@ -206,10 +207,25 @@ export function PredictionExplorer() {
                       display={isRoad ? `${Math.round(selected.probability * 100)}/100` : undefined}
                     />
                     <div className="grid flex-1 gap-2 text-xs sm:grid-cols-2">
-                      <Metric label="Uncertainty" value={`±${(selected.uncertainty * 100).toFixed(0)} pp`} />
+                      <Metric
+                        label="Uncertainty"
+                        value={`±${(selected.uncertainty * 100).toFixed(0)} pp`}
+                        hint={
+                          <InfoTip label="Uncertainty">
+                            How much the score could move because data is incomplete or the cell has
+                            little history. A wide band means “go and check”.
+                          </InfoTip>
+                        }
+                      />
                       <Metric
                         label="Data completeness"
                         value={`${Math.round(selected.dataCompleteness * 100)}%`}
+                        hint={
+                          <InfoTip label="Data completeness">
+                            Share of expected inputs available for this cell. Lower completeness
+                            increases the uncertainty band.
+                          </InfoTip>
+                        }
                       />
                       <Metric label="Elevation" value={`${selected.cell.elevation.toFixed(0)} m`} />
                       <Metric label="Slope" value={`${selected.cell.slope.toFixed(1)}°`} />
@@ -217,6 +233,12 @@ export function PredictionExplorer() {
                       <Metric
                         label="Impervious proxy"
                         value={`${Math.round(selected.cell.impervious * 100)}%`}
+                        hint={
+                          <InfoTip label="Impervious proxy">
+                            Estimated share of hard surface that stops rain soaking in. It is derived
+                            from distance to the centre and road density, not a land-cover raster.
+                          </InfoTip>
+                        }
                       />
                     </div>
                   </div>
@@ -398,10 +420,21 @@ export function PredictionExplorer() {
   )
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint?: React.ReactNode
+}) {
   return (
     <div className="rounded-md border border-border bg-muted/20 px-2.5 py-1.5">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        {label}
+        {hint}
+      </p>
       <p className="num mt-0.5 text-xs font-semibold">{value}</p>
     </div>
   )

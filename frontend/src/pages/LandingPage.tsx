@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  BookOpen,
   Check,
   CloudRain,
   Database,
@@ -59,6 +60,13 @@ export function LandingPage() {
       <header className="relative z-10 mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4">
         <Brand />
         <div className="flex items-center gap-2">
+          <Link
+            to="/guide"
+            className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            How it works
+          </Link>
           <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card/70 px-2.5 py-1 text-[10px] text-muted-foreground sm:inline-flex">
             <MapPin className="h-3 w-3 text-primary" />
             Indore · Madhya Pradesh
@@ -244,6 +252,21 @@ export function LandingPage() {
             </span>
           </Link>
         </section>
+
+        <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border bg-card/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Not sure which portal to use?</span> The guide
+            explains the risk score, the map colours and the data labels in plain language.
+          </p>
+          <Link
+            to="/guide"
+            className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            Read the 2-minute guide
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
 
         <section className="mt-10 rounded-2xl border border-border bg-card/40 p-5">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

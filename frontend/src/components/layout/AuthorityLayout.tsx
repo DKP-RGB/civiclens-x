@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   ArrowLeftRight,
+  BookOpen,
   Building2,
   ClipboardList,
   CloudRain,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Brand } from '@/components/layout/brand'
+import { PortalGuide } from '@/components/layout/portal-guide'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -151,6 +153,15 @@ export function AuthorityLayout() {
           </div>
           <div className="flex-1 overflow-y-auto px-2 py-1">
             <NavContent />
+            <div className="mt-4 px-1">
+              <Link
+                to="/guide"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+              >
+                <BookOpen className="h-4 w-4 shrink-0 opacity-80" />
+                How to use
+              </Link>
+            </div>
           </div>
           <div className="border-t border-border p-3">
             <div className="mb-2 flex items-start gap-2 rounded-md bg-muted/40 px-2.5 py-2">
@@ -223,6 +234,29 @@ export function AuthorityLayout() {
 
           <main className="flex-1 px-4 py-6 lg:px-6 lg:py-7">
             <div className="mx-auto w-full max-w-[1440px]">
+              <PortalGuide
+                portal="authority"
+                title="How to get from a hotspot to an action"
+                steps={[
+                  {
+                    icon: Map,
+                    title: 'See tomorrow’s hotspots',
+                    text: 'Open the future risk map to see the city-wide surface and top cells.',
+                  },
+                  {
+                    icon: Crosshair,
+                    title: 'Inspect the drivers',
+                    text: 'Click any cell to see rainfall, terrain, drainage and history factors.',
+                  },
+                  {
+                    icon: SlidersHorizontal,
+                    title: 'Test a scenario',
+                    text: 'Change rain, drainage or built-up cover in the simulator before committing work.',
+                  },
+                ]}
+                primaryTo="/authority/risk-map"
+                primaryLabel="Open the risk map"
+              />
               <Outlet />
             </div>
           </main>
@@ -250,6 +284,13 @@ export function AuthorityLayout() {
             >
               <ArrowLeftRight className="h-4 w-4" />
               Switch to citizen portal
+            </Link>
+            <Link
+              to="/guide"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <BookOpen className="h-4 w-4" />
+              How to use CivicLens X
             </Link>
             <Link
               to="/"
