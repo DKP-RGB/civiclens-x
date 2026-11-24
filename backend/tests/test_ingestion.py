@@ -184,6 +184,7 @@ def test_landuse_ingestion_builds_cell_features(client):
             assert summary.status_code == 200
             body = summary.json()
             assert body["cells"] == run.records_written
+            assert 0 < body["cellsWithBuiltUp"] < body["cells"]
             assert body["meanBuiltUpShare"] is not None
             assert body["lastSuccessAt"]
 

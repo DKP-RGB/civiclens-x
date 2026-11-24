@@ -10,9 +10,11 @@ preventive action queue.
 The project is deliberately scoped to **Indore only**. It does not make predictions for any
 other city.
 
-> **Status: Phase 2 complete (frontend), Phase 3 in progress (API).** All pages run on
-> bundled data. A FastAPI backend now persists complaints and serves the same illustrative
-> risk scores, but the frontend is not wired to it yet. There is no trained ML model.
+> **Status: Phase 4 complete (public-data ingestion).** The frontend runs on bundled data;
+> a FastAPI backend persists complaints, serves the same illustrative risk scores, and now
+> ingests real Open-Meteo rainfall and OSM landuse with provenance. One read-only authority
+> page reads those endpoints. There is no trained ML model, and the scorer does not consume
+> the ingested layers yet.
 > Every screen states which numbers are real public data, which are simulated, and which
 > are illustrative model output.
 
@@ -63,6 +65,7 @@ layer. The same table is summarised below.
 - What-if simulator: rainfall, duration, drainage condition, impervious cover, delta map
 - Preventive action centre: rule-based, department-owned work queue
 - Complaint management with status and priority editing
+- Data health: real ingestion status, forecast, land-use coverage and provenance
 
 The landing page at `/` is a simple portal selector. There is no authentication; roles are
 chosen, not verified.
@@ -156,8 +159,8 @@ python -m pytest
 python -m ruff check app tests
 ```
 
-The frontend reads `VITE_API_BASE_URL` but does not call the API yet; integration
-is a later phase.
+The frontend reads `VITE_API_BASE_URL` for the read-only Data health page. The risk
+screens still use bundled data; full integration is a later phase.
 
 ### API overview
 
@@ -235,8 +238,8 @@ docker compose up --build
 
 The stack runs the frontend behind nginx and the API on SQLite inside a named
 volume (`civiclens-data`). Override `DATABASE_URL` in `docker-compose.yml` to use
-PostgreSQL/PostGIS instead. The frontend still serves its bundled data until the
-Phase 7 integration; the container wiring is ready for it.
+PostgreSQL/PostGIS instead. The risk screens still serve bundled data until the Phase 7
+integration; only the Data health page calls the API.
 
 ---
 
@@ -307,7 +310,8 @@ assumptions. It is a sensitivity tool, not a forecast.
 | 7 | Frontend integration, testing, deployment | Planned |
 | 8 | Documentation and demo | Planned |
 
-The frontend still runs on its bundled data. Phase 7 switches it to the API.
+The risk screens still run on bundled data. Phase 7 switches them to the API; the Data
+health page is the first read-only integration.
 
 ---
 
@@ -319,7 +323,7 @@ The frontend still runs on its bundled data. Phase 7 switches it to the API.
   the remaining cells have zero built-up share rather than a measured one.
 - Incidents, population, assets and complaints are synthetic demo data.
 - Risk scores are illustrative and must not inform real operational decisions.
-- The frontend still runs on bundled data; it does not call the API yet (Phase 7).
+- The risk screens still run on bundled data; only the authority Data health page calls the API.
 - Preventive actions remain frontend-only until the model and optimiser exist.
 - The basemap requires network access to OpenFreeMap; the risk grid still renders without it.
 - Browser storage means complaints and status changes do not leave the device in the current frontend.

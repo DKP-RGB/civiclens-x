@@ -59,6 +59,7 @@ const SECTIONS: Array<{ label: string; items: NavItem[] }> = [
       { to: '/authority/infrastructure', label: 'Infrastructure', icon: Building2 },
       { to: '/authority/actions', label: 'Preventive actions', icon: Wrench },
       { to: '/authority/complaints', label: 'Complaints', icon: ClipboardList },
+      { to: '/authority/data', label: 'Data health', icon: Database },
     ],
   },
   {

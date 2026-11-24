@@ -15,6 +15,7 @@ import { LocalityRisk } from '@/pages/citizen/LocalityRisk'
 import { AuthorityDashboard } from '@/pages/authority/AuthorityDashboard'
 import { FutureRiskMap } from '@/pages/authority/FutureRiskMap'
 import { PredictionExplorer } from '@/pages/authority/PredictionExplorer'
+import { DataHealth } from '@/pages/authority/DataHealth'
 import { Infrastructure } from '@/pages/authority/Infrastructure'
 import { Simulator } from '@/pages/authority/Simulator'
 import { PreventiveActions } from '@/pages/authority/PreventiveActions'
@@ -73,6 +74,7 @@ export default function App() {
               <Route path="risk-map" element={<FutureRiskMap />} />
               <Route path="predictions" element={<PredictionExplorer />} />
               <Route path="infrastructure" element={<Infrastructure />} />
+              <Route path="data" element={<DataHealth />} />
               <Route path="simulator" element={<Simulator />} />
               <Route path="actions" element={<PreventiveActions />} />
               <Route path="complaints" element={<ComplaintManagement />} />

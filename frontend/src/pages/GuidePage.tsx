@@ -158,6 +158,7 @@ export function GuidePage() {
                 'See tomorrow’s hotspots on the risk map',
                 'Inspect the drivers behind a cell score',
                 'Simulate rain and queue preventive work',
+                'Check which real public data has been ingested',
               ]}
               to="/authority"
               cta="Go to authority console"

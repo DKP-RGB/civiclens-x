@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -27,6 +27,7 @@ def get_feature_summary(db: Session = Depends(get_db)) -> FeatureSummaryOut:
     totals = db.execute(
         select(
             func.count(CellFeature.cell_id),
+            func.sum(case((CellFeature.built_up_share > 0, 1), else_=0)),
             func.avg(CellFeature.built_up_share),
             func.avg(CellFeature.green_share),
             func.avg(CellFeature.water_share),
@@ -38,12 +39,13 @@ def get_feature_summary(db: Session = Depends(get_db)) -> FeatureSummaryOut:
     run = latest_success(db, SOURCE_OSM_LANDUSE)
     return FeatureSummaryOut(
         cells=cells,
-        mean_built_up_share=float(totals[1]) if totals[1] is not None else None,
-        mean_green_share=float(totals[2]) if totals[2] is not None else None,
-        mean_water_share=float(totals[3]) if totals[3] is not None else None,
-        samples_per_cell=int(totals[4]) if totals[4] is not None else None,
+        cells_with_built_up=int(totals[1] or 0),
+        mean_built_up_share=float(totals[2]) if totals[2] is not None else None,
+        mean_green_share=float(totals[3]) if totals[3] is not None else None,
+        mean_water_share=float(totals[4]) if totals[4] is not None else None,
+        samples_per_cell=int(totals[5]) if totals[5] is not None else None,
         source=SOURCE_OSM_LANDUSE if cells else None,
-        fetched_at=totals[5],
+        fetched_at=totals[6],
         last_success_at=run.finished_at if run else None,
     )
 

@@ -55,6 +55,7 @@ class CellFeatureOut(CamelModel):
 
 class FeatureSummaryOut(CamelModel):
     cells: int
+    cells_with_built_up: int = 0
     mean_built_up_share: float | None = None
     mean_green_share: float | None = None
     mean_water_share: float | None = None
