@@ -35,14 +35,24 @@ export const MODEL_INFO: ModelInfo = {
       note: 'Synthetic incident records used to exercise the pipeline. They are not real Indore complaints.',
     },
     {
-      label: 'Rainfall forecast',
+      label: 'Rainfall scenario in this view',
       provenance: 'simulated',
-      note: 'Demo monsoon scenario. Live Open-Meteo integration is Phase 3/9.',
+      note: 'Demo monsoon spell (12/30/105 mm). The scorer has not been switched to live rainfall yet.',
     },
     {
-      label: 'Impervious surface',
+      label: 'Rainfall observations & forecast (backend)',
+      provenance: 'public_dataset',
+      note: 'Open-Meteo ERA5 archive and 7-day forecast for Indore, ingested by the backend CLI. Not yet used by this view.',
+    },
+    {
+      label: 'Impervious-surface proxy in this view',
       provenance: 'simulated',
-      note: 'Built-up proxy derived from distance to centre and road density; land-cover raster integration pending.',
+      note: 'Built-up proxy derived from distance to centre and road density. The scorer does not consume the land-use layer yet.',
+    },
+    {
+      label: 'Land-use shares (backend)',
+      provenance: 'public_dataset',
+      note: 'OpenStreetMap landuse polygons sampled per 250 m cell into built-up, green and water shares. Ingested on demand; not yet used by this view.',
     },
   ],
   disclaimer:

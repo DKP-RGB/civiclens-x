@@ -69,7 +69,7 @@ const GLOSSARY = [
 const FAQ = [
   {
     q: 'Is this live?',
-    a: 'No. The rainfall scenario is a labelled demo, incidents and complaints are simulated, and the risk score is an illustrative rule. Real public layers are the OSM boundary, roads, waterways and Copernicus elevation.',
+    a: 'No. The backend now ingests real Open-Meteo rainfall and OSM landuse, but this screen still runs on a labelled demo rainfall scenario and the illustrative scorer. Incidents and complaints are simulated; real public layers are the OSM boundary, roads, waterways, elevation, weather and landuse.',
   },
   {
     q: 'Does it work for other cities?',

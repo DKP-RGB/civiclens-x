@@ -1,8 +1,9 @@
 """CivicLens X FastAPI application.
 
-Phase 3 scope: complaint persistence, risk scoring parity with the frontend,
-and dataset metadata. The frontend still runs on its bundled data until the
-integration phase; these endpoints are the contract it will switch to.
+Phase 4 scope: complaint persistence, risk scoring parity with the frontend,
+dataset metadata, and provenance-tracked ingestion of real public weather and
+OpenStreetMap landuse data. The frontend still runs on its bundled data until
+the integration phase; these endpoints are the contract it will switch to.
 """
 
 from __future__ import annotations

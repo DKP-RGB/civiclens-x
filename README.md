@@ -30,10 +30,13 @@ layer. The same table is summarised below.
 | Elevation, slope | Public dataset | Copernicus DEM GLO-90 sampled through Open-Meteo |
 | Major roads, waterways | Public dataset | OpenStreetMap via Overpass API |
 | Basemap tiles | Public dataset | OpenFreeMap (keyless), OpenStreetMap contributors |
-| Weather scenario | Simulated | A demo monsoon spell, not a live forecast |
+| Rainfall observations | Public dataset | Open-Meteo ERA5 archive (30 days, ingested) |
+| Rainfall forecast | Public dataset | Open-Meteo 7-day daily forecast (ingested) |
+| Weather scenario in the scorer | Simulated | A demo monsoon spell, not a live forecast |
 | Incidents | Simulated | 316 synthetic reports for demonstration |
 | Population estimates | Simulated | Illustrative only, not census figures |
-| Impervious-surface proxy | Simulated | Not derived from a land-cover product |
+| Land-use shares | Public dataset | OSM `landuse` polygons sampled per 250 m cell (ingested) |
+| Impervious-surface proxy in the scorer | Simulated | Still uses distance-to-centre + road density |
 | Municipal asset register | Simulated | No verified IMC inventory is connected |
 | Risk scores | Model output | An illustrative logistic scorer, **not** a trained ML model |
 | Complaints, actions | Seeded demo data | Stored in the browser; nothing is sent to IMC |
@@ -132,7 +135,7 @@ npm run lint      # oxlint
 
 On Windows you can also run `setup.bat` once and then `start.bat`.
 
-### 2. Backend (Phase 3)
+### 2. Backend (Phase 4)
 
 ```bash
 cd backend
@@ -175,9 +178,39 @@ is a later phase.
 | GET | `/api/v1/risk/summary` | Compact summary + top 10 cells |
 | GET | `/api/v1/risk/cells/{cell_id}` | Single cell with factors |
 | POST | `/api/v1/risk/simulate` | Re-score under a what-if scenario |
+| GET | `/api/v1/weather/daily` | Ingested daily observations, oldest first |
+| GET | `/api/v1/weather/forecast` | Ingested 7-day forecast + staleness flag |
+| GET | `/api/v1/ingestion/runs` | Provenance for every import attempt |
+| GET | `/api/v1/ingestion/features/summary` | Per-cell land-use coverage summary |
+| GET | `/api/v1/ingestion/features/{cell_id}` | Built-up / green / water shares for one cell |
 
 Responses use camelCase to match the frontend domain types. Risk scores from the
 API are numerically identical to the frontend scorer for the same inputs.
+
+### Ingesting public data
+
+Imports are manual, keyless and recorded, because Open-Meteo and Overpass are
+free community services rather than paid APIs. Nothing runs at API startup.
+
+```bash
+cd backend
+.venv\Scripts\activate
+python -m app.ingestion.cli weather    # archive (30 d) + 7-day forecast
+python -m app.ingestion.cli landuse    # OSM landuse polygons -> cell shares
+python -m app.ingestion.cli all
+```
+
+The last successful run per source is written to `ingestion_runs`. Weather rows
+land in `weather_daily` / `weather_forecast`; land-use shares in
+`cell_features`. A failed run is stored with its HTTP error instead of being
+silently dropped, and the forecast endpoint reports `stale: true` when the
+newest success is older than `FORECAST_STALE_HOURS` (default 12).
+
+Open-Meteo needs no key and typically answers in 1-2 s. Overpass needs a real
+`User-Agent` (configured via `USER_AGENT`) and can take 30-60 s for Indore; it
+returns 502 when at capacity, so the client retries one public mirror. The
+ingested weather and land-use layers are **not yet used by the risk scorer** —
+that switch belongs to the model phase.
 
 ### 3. Environment
 
@@ -202,8 +235,8 @@ docker compose up --build
 
 The stack runs the frontend behind nginx and the API on SQLite inside a named
 volume (`civiclens-data`). Override `DATABASE_URL` in `docker-compose.yml` to use
-PostgreSQL/PostGIS instead. The frontend still serves its bundled data in Phase 3;
-the container wiring is ready for the Phase 7 integration.
+PostgreSQL/PostGIS instead. The frontend still serves its bundled data until the
+Phase 7 integration; the container wiring is ready for it.
 
 ---
 
@@ -232,6 +265,17 @@ Raw downloads, caches and intermediate files live under `data/` and are git-igno
 The backend JSON in `backend/app/data/` is generated and committed so the API can
 start without re-running the pipeline.
 
+Phase 4 adds a separate, at-runtime import path for layers that change daily:
+
+```bash
+cd backend
+python -m app.ingestion.cli weather   # Open-Meteo archive + forecast
+python -m app.ingestion.cli landuse   # OSM landuse -> cell features
+```
+
+These writes go to the database, not to the committed JSON, so they can be
+refreshed without rebuilding the frontend bundle.
+
 ---
 
 ## The risk engine
@@ -257,7 +301,7 @@ assumptions. It is a sensitivity tool, not a forecast.
 | 1 | Foundation, data pipeline, project structure | Done |
 | 2 | Complete frontend on mock data | **Done** |
 | 3 | FastAPI backend, database, complaint persistence | **Done** |
-| 4 | Real public-data ingestion and storage | Planned |
+| 4 | Real public-data ingestion and storage | **Done** |
 | 5 | Model training, validation, honest metrics | Planned |
 | 6 | Gemini explanations with fallback | Planned |
 | 7 | Frontend integration, testing, deployment | Planned |
@@ -269,7 +313,10 @@ The frontend still runs on its bundled data. Phase 7 switches it to the API.
 
 ## Known limitations
 
-- Weather is a simulated scenario; there is no live forecast feed yet.
+- The risk scorer still uses a demo rainfall scenario and a built-up proxy; ingested weather
+  and land-use shares are stored and exposed but not yet consumed by the scorer.
+- OSM landuse coverage is partial: about 46% of cells contain a mapped landuse polygon, so
+  the remaining cells have zero built-up share rather than a measured one.
 - Incidents, population, assets and complaints are synthetic demo data.
 - Risk scores are illustrative and must not inform real operational decisions.
 - The frontend still runs on bundled data; it does not call the API yet (Phase 7).
@@ -284,6 +331,8 @@ The frontend still runs on its bundled data. Phase 7 switches it to the API.
 ## Attribution
 
 - Boundary, roads and waterways: © OpenStreetMap contributors, ODbL.
+- Landuse polygons: © OpenStreetMap contributors, ODbL (Overpass API).
+- Weather observations and forecast: Open-Meteo (ERA5 reanalysis + forecast), CC-BY 4.0.
 - Elevation: Copernicus DEM GLO-90, via Open-Meteo.
 - Basemap tiles and styles: OpenFreeMap, © OpenStreetMap contributors.
 
