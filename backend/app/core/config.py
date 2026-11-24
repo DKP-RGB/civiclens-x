@@ -44,6 +44,17 @@ class Settings(BaseSettings):
     model_dir: str = str(BACKEND_DIR / "artifacts")
     model_version: str = "0.1.0-prototype"
 
+    # Phase 4: keyless public data ingestion.
+    city_name: str = "Indore"
+    city_lat: float = 22.7196
+    city_lng: float = 75.8577
+    city_timezone: str = "Asia/Kolkata"
+    # south,west,north,east - covers the Indore study grid.
+    city_bbox: str = "22.58,75.70,22.87,76.02"
+    ingestion_timeout_seconds: float = 120.0
+    forecast_stale_hours: int = 12
+    user_agent: str = "CivicLensX/0.4 (research prototype; Indore urban intelligence)"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [item.strip() for item in self.cors_origins.split(",") if item.strip()]
@@ -51,6 +62,12 @@ class Settings(BaseSettings):
     @property
     def is_sqlite(self) -> bool:
         return self.database_url.startswith("sqlite")
+
+    @property
+    def city_bbox_tuple(self) -> tuple[float, float, float, float]:
+        """Return (south, west, north, east) parsed from CITY_BBOX."""
+        south, west, north, east = (float(part) for part in self.city_bbox.split(","))
+        return south, west, north, east
 
     @property
     def upload_path(self) -> Path:

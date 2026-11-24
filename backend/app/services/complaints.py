@@ -27,14 +27,7 @@ from app.schemas.enums import (
 )
 from app.services import risk as risk_service
 from app.services.storage import save_data_url
-
-
-def now_iso() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .isoformat(timespec="milliseconds")
-        .replace("+00:00", "Z")
-    )
+from app.utils.time import now_iso
 
 
 def to_out(complaint: Complaint) -> ComplaintOut:

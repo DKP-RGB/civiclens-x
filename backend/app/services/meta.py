@@ -37,14 +37,24 @@ DATA_SOURCES = [
         "note": "Synthetic incident records used to exercise the pipeline. They are not real Indore complaints.",
     },
     {
-        "label": "Rainfall forecast",
-        "provenance": "simulated",
-        "note": "Demo monsoon scenario. Live Open-Meteo integration is a later phase.",
+        "label": "Rainfall observations & forecast",
+        "provenance": "public_dataset",
+        "note": "Open-Meteo ERA5 archive and 7-day forecast for Indore, stored by the ingestion CLI. Real public data, not yet wired into the risk scorer.",
     },
     {
-        "label": "Impervious surface",
+        "label": "Risk scenario rainfall",
         "provenance": "simulated",
-        "note": "Built-up proxy derived from distance to centre and road density; land-cover raster integration pending.",
+        "note": "Demo monsoon scenario (12 mm/h, 30 mm/3 h, 105 mm/24 h) still used by the illustrative scorer until the Phase 5 model switch.",
+    },
+    {
+        "label": "Impervious surface (OSM landuse)",
+        "provenance": "public_dataset",
+        "note": "OpenStreetMap landuse polygons sampled per 250 m cell to estimate built-up, green and water shares. Ingested on demand via the CLI.",
+    },
+    {
+        "label": "Built-up proxy in the scorer",
+        "provenance": "simulated",
+        "note": "The risk scorer still uses a distance-to-centre and road-density proxy rather than the ingested landuse shares.",
     },
 ]
 
@@ -52,7 +62,7 @@ DISCLAIMERS = [
     "Prototype only. Risk values are illustrative and must not be used for operational decisions.",
     "No precision, recall or PR-AUC is claimed until a model is trained and validated on Indore data.",
     "Seeded complaints, incidents, population and asset records are simulated.",
-    "Weather is a demo monsoon scenario, not a live forecast.",
+    "Ingested weather and landuse rows are real public data, but the risk scorer still runs on a demo rainfall scenario and a built-up proxy.",
 ]
 
 MODEL_DISCLAIMER = (
@@ -76,7 +86,7 @@ def meta_payload() -> dict:
     settings = get_settings()
     return {
         "app": settings.app_name,
-        "phase": "3 - API and persistence (frontend still runs on bundled data)",
+        "phase": "4 - public data ingestion (frontend still runs on bundled data)",
         "city": "Indore",
         "grid": grid_meta(),
         "model": model_info(),

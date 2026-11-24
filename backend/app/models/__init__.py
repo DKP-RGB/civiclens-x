@@ -1,6 +1,16 @@
 """ORM models for CivicLens X."""
 
+from app.models.cell_feature import CellFeature
 from app.models.complaint import Complaint
 from app.models.complaint_event import ComplaintEvent
+from app.models.ingestion import IngestionRun
+from app.models.weather import WeatherDaily, WeatherForecast
 
-__all__ = ["Complaint", "ComplaintEvent"]
+__all__ = [
+    "CellFeature",
+    "Complaint",
+    "ComplaintEvent",
+    "IngestionRun",
+    "WeatherDaily",
+    "WeatherForecast",
+]

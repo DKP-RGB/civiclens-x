@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import get_settings
 from app.database.seed import seed_if_empty
 from app.database.session import SessionLocal, create_all
-from app.routers import complaints, health, meta, risk
+from app.routers import complaints, health, ingestion, meta, risk, weather
 
 logger = logging.getLogger("civiclens")
 
@@ -61,6 +61,8 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(complaints.router, prefix=settings.api_prefix)
 app.include_router(risk.router, prefix=settings.api_prefix)
+app.include_router(weather.router, prefix=settings.api_prefix)
+app.include_router(ingestion.router, prefix=settings.api_prefix)
 app.include_router(meta.router, prefix=settings.api_prefix)
 
 app.mount("/uploads", StaticFiles(directory=str(settings.upload_path)), name="uploads")
