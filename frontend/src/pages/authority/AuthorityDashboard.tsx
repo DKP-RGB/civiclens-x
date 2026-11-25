@@ -23,6 +23,7 @@ import { InfoTip } from '@/components/ui/info-tip'
 import { Sheet, SheetBody } from '@/components/ui/dialog'
 import { StatCard } from '@/components/domain/stat-card'
 import { RiskBadge, InlineNote, ProvenanceBadge, ComplaintStatusBadge } from '@/components/domain/badges'
+import { Badge } from '@/components/ui/badge'
 import { RiskDistribution } from '@/components/domain/risk-distribution'
 import { CellRiskPanel } from '@/components/domain/cell-risk-panel'
 import { IndoreMap } from '@/components/map/IndoreMap'
@@ -38,6 +39,7 @@ import {
   summarizeRisks,
 } from '@/lib/risk'
 import { cityBrief } from '@/lib/explain'
+import { useRiskSummary } from '@/lib/use-risk-summary'
 import { useAppStore } from '@/store/app-store'
 import { formatNumber, pct, timeAgo } from '@/lib/utils'
 
@@ -56,9 +58,20 @@ export function AuthorityDashboard() {
       }),
     [horizon],
   )
-  const summary = React.useMemo(() => summarizeRisks(risks), [risks])
+  const localSummary = React.useMemo(() => summarizeRisks(risks), [risks])
   const localities = React.useMemo(() => getLocalityRiskSummaries(risks), [risks])
-  const topCells = React.useMemo(() => getTopRiskCells(risks, 6), [risks])
+  const localTopCells = React.useMemo(() => getTopRiskCells(risks, 6), [risks])
+
+  // Headline counts and the priority queue come from the API when it is up.
+  // The scorer is numerically identical, so the fallback cannot drift.
+  const live = useRiskSummary({
+    category: 'waterlogging',
+    rain1h: horizon.rain1h,
+    rain3h: horizon.rain3h,
+    rain24h: horizon.rain24h,
+  })
+  const summary = live.data?.summary ?? localSummary
+  const topCells = live.data ? live.data.topCells.slice(0, 6) : localTopCells
 
   const openComplaints = complaints.filter((complaint) => complaint.status !== 'resolved')
   const urgentComplaints = openComplaints.filter(
@@ -308,9 +321,35 @@ export function AuthorityDashboard() {
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Priority cells</CardTitle>
-              <p className="text-xs text-muted-foreground">Highest predicted probability right now</p>
+            <CardHeader className="flex-row items-start justify-between gap-2 pb-3">
+              <div>
+                <CardTitle>Priority cells</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Highest predicted probability right now
+                </p>
+              </div>
+              <Badge
+                variant={
+                  live.status === 'api'
+                    ? 'success'
+                    : live.status === 'loading'
+                      ? 'outline'
+                      : 'warning'
+                }
+                title={
+                  live.status === 'api'
+                    ? 'Served by the FastAPI risk summary with the same rainfall inputs as the bundled scorer.'
+                    : live.status === 'fallback'
+                      ? `API unavailable (${live.error ?? 'unknown error'}). Using the bundled scorer.`
+                      : 'Contacting the API…'
+                }
+              >
+                {live.status === 'api'
+                  ? 'Live API'
+                  : live.status === 'loading'
+                    ? 'Syncing…'
+                    : 'Bundled fallback'}
+              </Badge>
             </CardHeader>
             <CardContent className="space-y-1.5">
               {topCells.map((risk) => (

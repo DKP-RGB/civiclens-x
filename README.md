@@ -12,9 +12,10 @@ other city.
 
 > **Status: Phase 4 complete (public-data ingestion).** The frontend runs on bundled data;
 > a FastAPI backend persists complaints, serves the same illustrative risk scores, and now
-> ingests real Open-Meteo rainfall and OSM landuse with provenance. One read-only authority
-> page reads those endpoints. There is no trained ML model, and the scorer does not consume
-> the ingested layers yet.
+> ingests real Open-Meteo rainfall and OSM landuse with provenance. The authority overview
+> reads its headline risk summary from the API, and a read-only Data health page shows the
+> ingestion trail. There is no trained ML model, and the scorer does not consume the
+> ingested layers yet.
 > Every screen states which numbers are real public data, which are simulated, and which
 > are illustrative model output.
 
@@ -58,7 +59,9 @@ layer. The same table is summarised below.
 - Locality risk explorer with cell-level factor breakdowns and AI-style explanations
 
 ### Authority (`/authority`)
-- Intelligence dashboard: city risk surface, distribution, rain, localities, priority cells
+- Intelligence dashboard: city risk surface, distribution, rain, localities, priority cells;
+  headline stats and the priority queue come from the API when it is reachable, otherwise
+  the numerically identical bundled scorer is used
 - Future risk map: horizon, risk type, layer toggles, locality focus
 - Prediction explorer: cell score, drivers, uncertainty, model card, data sources
 - Infrastructure intelligence: simulated asset register joined to the risk grid
@@ -159,8 +162,9 @@ python -m pytest
 python -m ruff check app tests
 ```
 
-The frontend reads `VITE_API_BASE_URL` for the read-only Data health page. The risk
-screens still use bundled data; full integration is a later phase.
+The frontend reads `VITE_API_BASE_URL` for the authority overview summary and the read-only
+Data health page. The map layers and other screens still use bundled data; full integration
+is a later phase.
 
 ### API overview
 
@@ -239,7 +243,7 @@ docker compose up --build
 The stack runs the frontend behind nginx and the API on SQLite inside a named
 volume (`civiclens-data`). Override `DATABASE_URL` in `docker-compose.yml` to use
 PostgreSQL/PostGIS instead. The risk screens still serve bundled data until the Phase 7
-integration; only the Data health page calls the API.
+integration; the authority overview summary and Data health page call the API.
 
 ---
 
@@ -310,8 +314,8 @@ assumptions. It is a sensitivity tool, not a forecast.
 | 7 | Frontend integration, testing, deployment | Planned |
 | 8 | Documentation and demo | Planned |
 
-The risk screens still run on bundled data. Phase 7 switches them to the API; the Data
-health page is the first read-only integration.
+The map layers still run on bundled data. Phase 7 switches them to the API; the authority
+overview summary and the Data health page are the first read-only integrations.
 
 ---
 
@@ -323,7 +327,7 @@ health page is the first read-only integration.
   the remaining cells have zero built-up share rather than a measured one.
 - Incidents, population, assets and complaints are synthetic demo data.
 - Risk scores are illustrative and must not inform real operational decisions.
-- The risk screens still run on bundled data; only the authority Data health page calls the API.
+- The map layers still run on bundled data; the authority overview summary and Data health page call the API.
 - Preventive actions remain frontend-only until the model and optimiser exist.
 - The basemap requires network access to OpenFreeMap; the risk grid still renders without it.
 - Browser storage means complaints and status changes do not leave the device in the current frontend.
