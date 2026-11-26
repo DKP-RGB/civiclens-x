@@ -10,14 +10,22 @@ preventive action queue.
 The project is deliberately scoped to **Indore only**. It does not make predictions for any
 other city.
 
-> **Status: Phase 4 complete (public-data ingestion).** The frontend runs on bundled data;
-> a FastAPI backend persists complaints, serves the same illustrative risk scores, and now
-> ingests real Open-Meteo rainfall and OSM landuse with provenance. The authority overview
-> reads its headline risk summary from the API, and a read-only Data health page shows the
-> ingestion trail. There is no trained ML model, and the scorer does not consume the
-> ingested layers yet.
-> Every screen states which numbers are real public data, which are simulated, and which
-> are illustrative model output.
+> **Status: Phase 4 complete, plus a live city layer.** The frontend runs on bundled data
+> except the new live pages. A FastAPI backend persists complaints, serves the illustrative
+> risk scores, and ingests real Open-Meteo rainfall and OSM landuse with provenance.
+>
+> New in this pass:
+> - `/city` — a graphics-first live page: current Indore weather, a 24 h rain forecast, the
+>   live terrain-wetness surface, sourced city projects, mapped OSM construction and real
+>   licensed photographs.
+> - `GET /api/v1/live/weather` — live Open-Meteo `current` + 15-minute nowcast.
+> - `GET /api/v1/risk/surface` — the `hydro-screening-0.2` terrain-wetness index, computed
+>   from the real DEM, OSM land use and live rain.
+> - `GET /api/v1/media/nearby` — real Wikimedia Commons photos with author and licence.
+> - `GET /api/v1/city/works` — sourced projects plus live OSM construction features.
+>
+> There is still **no trained ML model**. The new index is physically based, not trained or
+> validated, because no verified Indore waterlogging labels exist. Every screen says so.
 
 ---
 
@@ -35,13 +43,19 @@ layer. The same table is summarised below.
 | Basemap tiles | Public dataset | OpenFreeMap (keyless), OpenStreetMap contributors |
 | Rainfall observations | Public dataset | Open-Meteo ERA5 archive (30 days, ingested) |
 | Rainfall forecast | Public dataset | Open-Meteo 7-day daily forecast (ingested) |
-| Weather scenario in the scorer | Simulated | A demo monsoon spell, not a live forecast |
+| Live weather and 24 h rain | Public dataset | Open-Meteo `current` + `minutely_15` + `hourly`, cached 5 min |
+| Weather scenario in the prototype scorer | Simulated | A demo monsoon spell, not a live forecast |
 | Incidents | Simulated | 316 synthetic reports for demonstration |
 | Population estimates | Simulated | Illustrative only, not census figures |
 | Land-use shares | Public dataset | OSM `landuse` polygons sampled per 250 m cell (ingested) |
-| Impervious-surface proxy in the scorer | Simulated | Still uses distance-to-centre + road density |
+| Terrain wetness (TWI) | Derived | D8 flow accumulation on the real Copernicus DEM |
+| Impervious-surface proxy in the prototype scorer | Simulated | Still uses distance-to-centre + road density |
 | Municipal asset register | Simulated | No verified IMC inventory is connected |
-| Risk scores | Model output | An illustrative logistic scorer, **not** a trained ML model |
+| Prototype risk scores | Model output | An illustrative logistic scorer, **not** a trained ML model |
+| `/city` risk surface | Model output | `hydro-screening-0.2`, physically based, `trained: false`, `validated: false` |
+| City project dates | Public dataset | Only where a cited source states a date; otherwise blank |
+| Mapped construction sites | Public dataset | Live OSM `construction` features (may lag reality) |
+| Nearby photographs | Public dataset | Wikimedia Commons geosearch, with per-image author and licence |
 | Complaints, actions | Seeded demo data | Stored in the browser; nothing is sent to IMC |
 | Explanations | Rule-based text | Gemini integration arrives with the backend |
 
@@ -51,6 +65,14 @@ layer. The same table is summarised below.
 ---
 
 ## Portals
+
+### Live city pulse (`/city`)
+- Current Indore temperature, condition, humidity, wind and rain, straight from Open-Meteo
+- 24 h rainfall bars, with an explicit "no rain expected" state on dry days
+- Live terrain-wetness surface: mean risk, critical/high counts and top hotspots
+- Sourced city projects (metro, Ring Road) with the citation and "as of" date
+- Mapped OSM construction features, when the Overpass import succeeds
+- Real Indore photographs from Wikimedia Commons, with author and licence on every image
 
 ### Citizen (`/citizen`)
 - Dashboard with local risk, weather and open complaints
@@ -162,9 +184,8 @@ python -m pytest
 python -m ruff check app tests
 ```
 
-The frontend reads `VITE_API_BASE_URL` for the authority overview summary and the read-only
-Data health page. The map layers and other screens still use bundled data; full integration
-is a later phase.
+The frontend reads `VITE_API_BASE_URL`. `/city`, the landing snapshot, the authority overview
+summary and the Data health page call the API; the other risk screens still use bundled data.
 
 ### API overview
 
@@ -183,8 +204,12 @@ is a later phase.
 | POST | `/api/v1/complaints/{id}/notes` | Add information to the timeline |
 | GET | `/api/v1/risk` | Full risk surface for a category and rainfall inputs |
 | GET | `/api/v1/risk/summary` | Compact summary + top 10 cells |
+| GET | `/api/v1/risk/surface` | `hydro-screening-0.2` surface, live rain by default |
 | GET | `/api/v1/risk/cells/{cell_id}` | Single cell with factors |
 | POST | `/api/v1/risk/simulate` | Re-score under a what-if scenario |
+| GET | `/api/v1/live/weather` | Live current conditions + 1/3/24 h nowcast |
+| GET | `/api/v1/media/nearby` | Licensed Commons photos near a point |
+| GET | `/api/v1/city/works` | Sourced projects + mapped OSM construction |
 | GET | `/api/v1/weather/daily` | Ingested daily observations, oldest first |
 | GET | `/api/v1/weather/forecast` | Ingested 7-day forecast + staleness flag |
 | GET | `/api/v1/ingestion/runs` | Provenance for every import attempt |
@@ -204,20 +229,27 @@ cd backend
 .venv\Scripts\activate
 python -m app.ingestion.cli weather    # archive (30 d) + 7-day forecast
 python -m app.ingestion.cli landuse    # OSM landuse polygons -> cell shares
+python -m app.ingestion.cli works      # OSM construction sites -> city page
 python -m app.ingestion.cli all
 ```
 
 The last successful run per source is written to `ingestion_runs`. Weather rows
 land in `weather_daily` / `weather_forecast`; land-use shares in
-`cell_features`. A failed run is stored with its HTTP error instead of being
-silently dropped, and the forecast endpoint reports `stale: true` when the
-newest success is older than `FORECAST_STALE_HOURS` (default 12).
+`cell_features`; construction features in `construction_sites`. A failed run is
+stored with its HTTP error instead of being silently dropped, and the forecast
+endpoint reports `stale: true` when the newest success is older than
+`FORECAST_STALE_HOURS` (default 12).
 
 Open-Meteo needs no key and typically answers in 1-2 s. Overpass needs a real
-`User-Agent` (configured via `USER_AGENT`) and can take 30-60 s for Indore; it
-returns 502 when at capacity, so the client retries one public mirror. The
-ingested weather and land-use layers are **not yet used by the risk scorer** —
-that switch belongs to the model phase.
+`User-Agent` (configured via `USER_AGENT`) and can take 30-120 s for Indore; it
+returns 502 when at capacity, so the client tries three public mirrors. An empty
+answer is treated as a failure so a busy server cannot silently wipe the stored
+construction layer. Overpass outages are common, so the city page degrades to
+"no sites stored yet" rather than failing.
+
+The ingested weather and land-use layers are consumed by the new
+`/risk/surface` index. The older `/risk`, `/risk/summary` and `/risk/simulate`
+endpoints still use the bundled prototype scorer.
 
 ### 3. Environment
 
@@ -287,10 +319,32 @@ refreshed without rebuilding the frontend bundle.
 
 ## The risk engine
 
-`frontend/src/lib/risk.ts` contains an **illustrative logistic scorer**. It combines elevation,
-slope, distance to the nearest mapped waterway, an impervious-surface proxy, rainfall intensity
-and a repeat-incident term into a 0–1 score, then classifies it as low, moderate, high or
-critical.
+There are two scorers, deliberately separated.
+
+### `hydro-screening-0.2` — used by `/city` and the landing snapshot
+
+`backend/app/services/susceptibility.py` scores every cell from:
+
+- **terrain wetness**: D8 flow direction and flow accumulation over the real Copernicus
+  DEM, converted to a topographic wetness index (`ln(a / tan β)`) in
+  `app/services/hydrology.py`;
+- **real built-up share** from ingested OSM landuse where available, otherwise the bundled
+  proxy (the response labels which one was used);
+- **drainage proximity** from mapped OSM waterways;
+- **road density** from OSM major roads;
+- **live rainfall** from the Open-Meteo nowcast (1 h / 3 h / 24 h).
+
+The weights follow standard wetness and flash-flood screening practice. The model card
+reports `trained: false` and `validated: false`: there are no verified Indore waterlogging
+labels to train or validate against. It is a physical screening index, not a prediction
+with a measured accuracy.
+
+### Prototype logistic scorer — used by the older risk screens
+
+`frontend/src/lib/risk.ts` and its Python port `backend/app/services/risk.py` contain an
+**illustrative logistic scorer**. It combines elevation, slope, distance to the nearest
+mapped waterway, an impervious-surface proxy, rainfall intensity and a repeat-incident term
+into a 0–1 score, then classifies it as low, moderate, high or critical.
 
 It is a transparent placeholder that lets the UI be built and tested. It is **not** XGBoost,
 not trained on labels, and not validated. The `CellRisk` shape is designed so a real model can
@@ -309,25 +363,39 @@ assumptions. It is a sensitivity tool, not a forecast.
 | 2 | Complete frontend on mock data | **Done** |
 | 3 | FastAPI backend, database, complaint persistence | **Done** |
 | 4 | Real public-data ingestion and storage | **Done** |
-| 5 | Model training, validation, honest metrics | Planned |
+| 5 | Model training, validation, honest metrics | **Blocked** — no verified Indore labels |
 | 6 | Gemini explanations with fallback | Planned |
-| 7 | Frontend integration, testing, deployment | Planned |
+| 7 | Frontend integration, testing, deployment | In progress |
 | 8 | Documentation and demo | Planned |
 
-The map layers still run on bundled data. Phase 7 switches them to the API; the authority
-overview summary and the Data health page are the first read-only integrations.
+Phase 5 cannot start honestly: there is no open, verified Indore waterlogging label set to
+train or validate against. Training on the synthetic incidents would produce meaningless
+metrics, so the project ships a physically based screening index instead and labels it as
+such.
+
+`/city` and the landing snapshot now read the live API. The remaining risk screens still use
+bundled data; switching them is the next integration step.
 
 ---
 
 ## Known limitations
 
-- The risk scorer still uses a demo rainfall scenario and a built-up proxy; ingested weather
-  and land-use shares are stored and exposed but not yet consumed by the scorer.
+- There are **no verified Indore waterlogging labels**, so no trained model and no accuracy
+  metrics exist. `hydro-screening-0.2` is physically based and unvalidated.
+- The older risk screens still use a demo rainfall scenario and a built-up proxy; the live
+  model is exposed at `/risk/surface` and used by `/city` and the landing snapshot.
 - OSM landuse coverage is partial: about 46% of cells contain a mapped landuse polygon, so
-  the remaining cells have zero built-up share rather than a measured one.
+  the remaining cells fall back to the bundled built-up proxy and say so.
+- Overpass is intermittently at capacity (HTTP 502). The construction import can fail for
+  hours; the city page then shows zero mapped sites instead of stale data.
+- Commons has **no geotagged Indore waterlogging or pothole archive**. Nearby photos are
+  place photographs, clearly labelled as not a record of a specific defect. When nothing
+  relevant is geotagged nearby, a small curated set of real Indore street photos is shown
+  and labelled as city-wide.
+- Project completion dates are shown only when a cited source states one. Several major
+  works (including the metro airport extension) have no published completion date, so the
+  UI leaves it blank rather than guessing.
 - Incidents, population, assets and complaints are synthetic demo data.
-- Risk scores are illustrative and must not inform real operational decisions.
-- The map layers still run on bundled data; the authority overview summary and Data health page call the API.
 - Preventive actions remain frontend-only until the model and optimiser exist.
 - The basemap requires network access to OpenFreeMap; the risk grid still renders without it.
 - Browser storage means complaints and status changes do not leave the device in the current frontend.
@@ -343,6 +411,8 @@ overview summary and the Data health page are the first read-only integrations.
 - Weather observations and forecast: Open-Meteo (ERA5 reanalysis + forecast), CC-BY 4.0.
 - Elevation: Copernicus DEM GLO-90, via Open-Meteo.
 - Basemap tiles and styles: OpenFreeMap, © OpenStreetMap contributors.
+- Photographs: Wikimedia Commons, per-image licence and author shown in the UI.
+- City project dates: Press Information Bureau, Wikipedia, Free Press Journal (linked per row).
 
 ## License
 

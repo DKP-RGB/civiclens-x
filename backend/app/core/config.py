@@ -53,7 +53,10 @@ class Settings(BaseSettings):
     city_bbox: str = "22.58,75.70,22.87,76.02"
     ingestion_timeout_seconds: float = 120.0
     forecast_stale_hours: int = 12
-    user_agent: str = "CivicLensX/0.4 (research prototype; Indore urban intelligence)"
+    user_agent: str = (
+        "CivicLensX/0.4 (https://github.com/DKP-RGB/civiclens-x; "
+        "Indore urban intelligence prototype)"
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:

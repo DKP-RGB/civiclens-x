@@ -31,8 +31,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Ingest Indore public data")
     parser.add_argument(
         "command",
-        choices=["weather", "landuse", "all"],
-        help="weather = archive + forecast, landuse = OSM polygons, all = both",
+        choices=["weather", "landuse", "works", "all"],
+        help=(
+            "weather = archive + forecast, landuse = OSM polygons, "
+            "works = OSM construction sites, all = every source"
+        ),
     )
     parser.add_argument("--archive-days", type=int, default=30)
     parser.add_argument("--forecast-days", type=int, default=7)
@@ -54,6 +57,8 @@ def main(argv: list[str] | None = None) -> int:
                     _print_run(run)
             if args.command in {"landuse", "all"}:
                 _print_run(service.ingest_landuse(db))
+            if args.command in {"works", "all"}:
+                _print_run(service.ingest_construction(db))
         except Exception as exc:  # noqa: BLE001 - CLI boundary
             print(f"Ingestion failed: {exc}", file=sys.stderr)
             return 1

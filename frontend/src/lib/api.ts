@@ -91,6 +91,125 @@ export interface RiskSummaryQuery {
   rain24h: number
 }
 
+export interface LiveWeather {
+  city: string
+  timezone: string
+  provenance: 'public_dataset'
+  source: string
+  fetchedAt: string
+  current: {
+    time: string | null
+    temperature: number | null
+    humidity: number | null
+    precipitation: number | null
+    rain: number | null
+    weatherCode: number | null
+    wind: number | null
+  }
+  nowcastMm: { next1h: number; next3h: number; next24h: number }
+  hourly: Array<{ time: string | null; precipitation: number; probability: number | null }>
+  stale: boolean
+  cacheSeconds: number
+}
+
+export interface CommonsPhoto {
+  id: string
+  title: string
+  author: string
+  license: string
+  licenseUrl: string
+  pageUrl: string
+  imageUrl: string
+  thumbUrl: string
+  width: number
+  height: number
+}
+
+export interface NearbyPhotos {
+  lat: number
+  lng: number
+  radius: number
+  scope: 'nearby' | 'city'
+  provenance: 'public_dataset'
+  source: string
+  fetchedAt: string
+  note: string
+  photos: CommonsPhoto[]
+}
+
+export type ProjectStatus = 'operational' | 'under_construction' | 'planned' | 'approved'
+
+export interface CityProject {
+  id: string
+  name: string
+  category: string
+  status: ProjectStatus
+  area: string
+  summary: string
+  started: string | null
+  opened: string | null
+  expectedCompletion: string | null
+  targetWindow?: string
+  sourceName: string
+  sourceUrl: string
+  asOf: string
+}
+
+export interface ConstructionSite {
+  osmId: string
+  kind: string
+  name: string | null
+  lat: number
+  lng: number
+  tags: Record<string, string>
+}
+
+export interface CityWorks {
+  asOf: string
+  notes: string
+  provenance: 'public_dataset'
+  projects: CityProject[]
+  sites: ConstructionSite[]
+  siteCount: number
+  lastIngestedAt: string | null
+  sources: Array<{ name: string; url: string; license: string }>
+}
+
+export interface SurfaceCell {
+  cellId: string
+  lng: number
+  lat: number
+  localityId: string
+  probability: number
+  level: 'low' | 'moderate' | 'high' | 'critical'
+  wetness: number
+  builtUpShare: number
+  builtUpSource: 'osm_landuse' | 'simulated_proxy'
+  rainFactor: number
+}
+
+export interface RiskSurface {
+  model: {
+    id: string
+    name: string
+    kind: string
+    trained: boolean
+    validated: boolean
+    note: string
+  }
+  inputs: { rain1h: number; rain3h: number; rain24h: number; source: string }
+  summary: {
+    meanProbability: number
+    counts: Record<'low' | 'moderate' | 'high' | 'critical', number>
+    criticalCells: number
+    highCells: number
+    totalCells: number
+    cellsWithMeasuredBuiltUp: number
+  }
+  topCells: SurfaceCell[]
+  cells: SurfaceCell[]
+}
+
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     signal,
@@ -122,4 +241,32 @@ export function fetchRiskSummary(query: RiskSummaryQuery, signal?: AbortSignal) 
     rain24h: query.rain24h.toFixed(2),
   })
   return getJson<RiskSummaryResponse>(`/risk/summary?${params.toString()}`, signal)
+}
+
+export function fetchLiveWeather(signal?: AbortSignal) {
+  return getJson<LiveWeather>('/live/weather', signal)
+}
+
+export function fetchRiskSurface(signal?: AbortSignal) {
+  return getJson<RiskSurface>('/risk/surface', signal)
+}
+
+export function fetchCityWorks(signal?: AbortSignal) {
+  return getJson<CityWorks>('/city/works', signal)
+}
+
+export function fetchNearbyPhotos(
+  lat: number,
+  lng: number,
+  radius = 1500,
+  limit = 6,
+  signal?: AbortSignal,
+) {
+  const params = new URLSearchParams({
+    lat: lat.toFixed(5),
+    lng: lng.toFixed(5),
+    radius: String(radius),
+    limit: String(limit),
+  })
+  return getJson<NearbyPhotos>(`/media/nearby?${params.toString()}`, signal)
 }

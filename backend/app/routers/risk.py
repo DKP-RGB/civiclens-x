@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from app.database.session import get_db
 from app.geospatial.dataset import cell_map
+from app.models.cell_feature import CellFeature
 from app.schemas.enums import DrainageCondition, RiskCategory
 from app.schemas.risk import (
     CellRiskOut,
@@ -17,6 +21,8 @@ from app.schemas.risk import (
     ScenarioResponse,
 )
 from app.services import risk as service
+from app.services import susceptibility
+from app.services.live_weather import LiveWeatherError, fetch_live_weather
 
 router = APIRouter(prefix="/risk", tags=["risk"])
 
@@ -70,6 +76,40 @@ def get_summary(
         inputs=RiskInputsOut(rain1h=rain1h, rain3h=rain3h, rain24h=rain24h),
         summary=service.summarize_risks(risks),
         top_cells=service.get_top_risk_cells(risks, 10),
+    )
+
+
+@router.get("/surface")
+def get_surface(
+    rain1h: float | None = Query(default=None, ge=0, le=500),
+    rain3h: float | None = Query(default=None, ge=0, le=800),
+    rain24h: float | None = Query(default=None, ge=0, le=2000),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Compact map surface from the terrain-wetness screening index.
+
+    When rainfall is omitted the live Open-Meteo nowcast is used; if that is
+    unreachable the demo scenario is used and the source says so.
+    """
+    source = "request"
+    if rain1h is None or rain3h is None or rain24h is None:
+        try:
+            live = fetch_live_weather()
+            nowcast = live["nowcastMm"]
+            rain1h, rain3h, rain24h = nowcast["next1h"], nowcast["next3h"], nowcast["next24h"]
+            source = "open-meteo-live"
+        except LiveWeatherError:
+            demo = service.DEMO_RISK_INPUTS
+            rain1h, rain3h, rain24h = demo.rain1h, demo.rain3h, demo.rain24h
+            source = "demo-fallback"
+
+    built_up = {
+        row.cell_id: row.built_up_share
+        for row in db.execute(select(CellFeature)).scalars()
+    }
+    return susceptibility.compute_surface(
+        susceptibility.RainfallInputs(rain1h, rain3h, rain24h, source),
+        built_up,
     )
 
 

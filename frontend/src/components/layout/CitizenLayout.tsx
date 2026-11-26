@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
+  Activity,
   ArrowRight,
   FileText,
   HelpCircle,
@@ -29,6 +30,7 @@ const NAV: NavItem[] = [
   { to: '/citizen/report', label: 'Report issue', icon: PlusCircle },
   { to: '/citizen/complaints', label: 'My complaints', icon: FileText },
   { to: '/citizen/risk', label: 'Locality risk', icon: MapPin },
+  { to: '/city', label: 'Live city', icon: Activity },
 ]
 
 export function CitizenLayout() {

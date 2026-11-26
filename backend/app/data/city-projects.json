@@ -1,0 +1,63 @@
+{
+  "asOf": "2026-11-25",
+  "notes": "Compiled from public sources. A completion date is shown only where the cited source states one; otherwise it stays blank rather than being guessed.",
+  "projects": [
+    {
+      "id": "indore-metro-yellow-line",
+      "name": "Indore Metro — Yellow Line",
+      "category": "metro",
+      "status": "operational",
+      "area": "Gandhi Nagar → Malviya Nagar Chauraha",
+      "summary": "About 17–18 km and 16 stations in service. The 6 km priority corridor opened on 31 May 2025; the 11 km Reach II extension opened on 5 September 2026, taking the network to 16 stations.",
+      "started": "2019-09-14",
+      "opened": "2026-09-05",
+      "expectedCompletion": null,
+      "sourceName": "Press Information Bureau",
+      "sourceUrl": "https://www.pib.gov.in/PressReleaseIframePage.aspx?PRID=2307042&reg=48&lang=2",
+      "asOf": "2026-11-25"
+    },
+    {
+      "id": "indore-metro-airport-extension",
+      "name": "Indore Metro — Airport extension",
+      "category": "metro",
+      "status": "under_construction",
+      "area": "Malviya Nagar Chauraha → Airport",
+      "summary": "The remaining 15.2 km and 13 stations of the Yellow Line are under construction. No public completion date is currently stated.",
+      "started": null,
+      "opened": null,
+      "expectedCompletion": null,
+      "sourceName": "Wikipedia — Indore Metro",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Indore_Metro",
+      "asOf": "2026-11-25"
+    },
+    {
+      "id": "indore-ujjain-metro",
+      "name": "Indore–Ujjain Metro",
+      "category": "metro",
+      "status": "planned",
+      "area": "Indore ↔ Ujjain",
+      "summary": "Public reporting says the Indore–Ujjain line will be taken up only after Simhastha 2028. No construction start or completion date has been notified.",
+      "started": null,
+      "opened": null,
+      "expectedCompletion": null,
+      "targetWindow": "after Simhastha 2028",
+      "sourceName": "Free Press Journal",
+      "sourceUrl": "https://www.freepressjournal.in/indore/indore-news-indore-ujjain-metro-only-after-simhastha-2028",
+      "asOf": "2026-11-25"
+    },
+    {
+      "id": "indore-ring-road",
+      "name": "Indore Ring Road",
+      "category": "road",
+      "status": "under_construction",
+      "area": "City ring corridor",
+      "summary": "Ring Road segments and bridges are mapped in OpenStreetMap under construction. The mapped extent is not an official project schedule; see the mapped sites below.",
+      "started": null,
+      "opened": null,
+      "expectedCompletion": null,
+      "sourceName": "OpenStreetMap contributors (ODbL)",
+      "sourceUrl": "https://www.openstreetmap.org/relation/16636427",
+      "asOf": "2026-11-25"
+    }
+  ]
+}

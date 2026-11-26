@@ -19,7 +19,9 @@ from app.geospatial.dataset import grid_cells
 from app.ingestion.features import compute_cell_features, prepare_polygons
 from app.ingestion.open_meteo import fetch_archive, fetch_forecast
 from app.ingestion.overpass import OverpassError, fetch_landuse
+from app.ingestion.works import fetch_construction
 from app.models.cell_feature import CellFeature
+from app.models.construction import ConstructionSite
 from app.models.ingestion import IngestionRun
 from app.models.weather import WeatherDaily, WeatherForecast
 from app.utils.time import now_iso, today_utc
@@ -27,6 +29,7 @@ from app.utils.time import now_iso, today_utc
 SOURCE_ARCHIVE = "open-meteo-archive"
 SOURCE_FORECAST = "open-meteo-forecast"
 SOURCE_OSM_LANDUSE = "osm-landuse"
+SOURCE_OSM_CONSTRUCTION = "osm-construction"
 
 # ERA5 reanalysis (behind the archive endpoint) lags roughly five days.
 ARCHIVE_LAG_DAYS = 5
@@ -262,3 +265,25 @@ def forecast_is_stale(db: Session) -> tuple[bool, str | None]:
         return True, run.finished_at
     age = datetime.now(timezone.utc) - finished
     return age > timedelta(hours=get_settings().forecast_stale_hours), run.finished_at
+
+
+def ingest_construction(
+    db: Session,
+    *,
+    transport: Any | None = None,
+) -> IngestionRun:
+    """Replace the OSM construction layer used by the city works page."""
+
+    def work() -> tuple[int, str]:
+        sites = fetch_construction(transport=transport)
+        db.execute(delete(ConstructionSite))
+        fetched_at = now_iso()
+        counts: dict[str, int] = {}
+        for site in sites:
+            counts[site["kind"]] = counts.get(site["kind"], 0) + 1
+            db.add(ConstructionSite(fetched_at=fetched_at, **site))
+        db.flush()
+        summary = ", ".join(f"{kind}:{count}" for kind, count in sorted(counts.items()))
+        return len(sites), f"OSM features ({summary or 'none'})"
+
+    return _execute(db, SOURCE_OSM_CONSTRUCTION, work)

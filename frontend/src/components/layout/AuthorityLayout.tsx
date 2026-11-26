@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
+  Activity,
   ArrowLeftRight,
   BookOpen,
   Building2,
@@ -49,6 +50,7 @@ const SECTIONS: Array<{ label: string; items: NavItem[] }> = [
     label: 'Intelligence',
     items: [
       { to: '/authority', label: 'Overview', icon: LayoutDashboard, end: true },
+      { to: '/city', label: 'Live city pulse', icon: Activity },
       { to: '/authority/risk-map', label: 'Future risk map', icon: Map },
       { to: '/authority/predictions', label: 'Prediction explorer', icon: Crosshair },
     ],
